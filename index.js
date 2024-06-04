@@ -61,6 +61,19 @@ async function run() {
       res.send(result);
     });
 
+    // all trainers api
+    app.get("/allTrainers", async (req, res) => {
+      const result = await trainerInfoCollection.find().toArray();
+      res.send(result);
+    });
+    // get one trainer data api
+    app.get("/allTrainers/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new Object(id) };
+      const result = await trainerInfoCollection.findOne(query);
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
