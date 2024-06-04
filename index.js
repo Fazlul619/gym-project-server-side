@@ -26,6 +26,7 @@ async function run() {
     await client.connect();
     const subscriberCollection = client.db("gymDB").collection("subscriber");
     const userCollection = client.db("gymDB").collection("users");
+    const trainerInfoCollection = client.db("gymDB").collection("trainerInfo");
 
     // subscriber api
     app.post("/subscriber", async (req, res) => {
@@ -50,6 +51,13 @@ async function run() {
         return res.send({ message: "user already exists", insertedId: null });
       }
       const result = await userCollection.insertOne(user);
+      res.send(result);
+    });
+
+    // trainer info api
+    app.post("/trainerInfo", async (req, res) => {
+      const trainerInfo = req.body;
+      const result = await trainerInfoCollection.insertOne(trainerInfo);
       res.send(result);
     });
 
