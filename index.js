@@ -57,6 +57,14 @@ async function run() {
     // trainer info api
     app.post("/trainerInfo", async (req, res) => {
       const trainerInfo = req.body;
+      const query = { email: trainerInfo.email };
+      const existTrainerInfo = await trainerInfoCollection.findOne(query);
+      if (existTrainerInfo) {
+        return res.send({
+          message: "You already applied for become a trainer",
+          insertedId: null,
+        });
+      }
       const result = await trainerInfoCollection.insertOne(trainerInfo);
       res.send(result);
     });
