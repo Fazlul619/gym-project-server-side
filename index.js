@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const cors = require("cors");
 require("dotenv").config();
@@ -77,7 +77,7 @@ async function run() {
     // get one trainer data api
     app.get("/allTrainers/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new Object(id) };
+      const query = { _id: new ObjectId(id) };
       const result = await trainerInfoCollection.findOne(query);
       res.send(result);
     });
