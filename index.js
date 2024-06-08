@@ -27,6 +27,7 @@ async function run() {
     const subscriberCollection = client.db("gymDB").collection("subscriber");
     const userCollection = client.db("gymDB").collection("users");
     const trainerInfoCollection = client.db("gymDB").collection("trainerInfo");
+    const paymentInfoCollection = client.db("gymDB").collection("paymentInfo");
 
     // subscriber api
     app.post("/subscriber", async (req, res) => {
@@ -66,6 +67,13 @@ async function run() {
         });
       }
       const result = await trainerInfoCollection.insertOne(trainerInfo);
+      res.send(result);
+    });
+
+    // payment api
+    app.post("/paymentInfo", async (req, res) => {
+      const paymentInfo = req.body;
+      const result = await paymentInfoCollection.insertOne(paymentInfo);
       res.send(result);
     });
 
