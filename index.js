@@ -73,7 +73,28 @@ async function run() {
     // payment api
     app.post("/paymentInfo", async (req, res) => {
       const paymentInfo = req.body;
+      const query = { userEmail: paymentInfo.userEmail };
+      const existPaymentInfo = await paymentInfoCollection.findOne(query);
+      if (existPaymentInfo) {
+        return res.send({
+          message: "You already payment successfully",
+          insertedId: null,
+        });
+      }
       const result = await paymentInfoCollection.insertOne(paymentInfo);
+      res.send(result);
+    });
+
+    // get all subscriber api
+    app.get("/subscriber", async (req, res) => {
+      const result = await subscriberCollection.find().toArray();
+      res.send(result);
+    });
+
+    // get all payment info api
+
+    app.get("/paymentInfo", async (req, res) => {
+      const result = await paymentInfoCollection.find().toArray();
       res.send(result);
     });
 
@@ -87,6 +108,12 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await trainerInfoCollection.findOne(query);
+      res.send(result);
+    });
+
+    // user api for get user from database
+    app.get("/allUsers", async (req, res) => {
+      const result = await userCollection.find().toArray();
       res.send(result);
     });
 
