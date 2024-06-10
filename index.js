@@ -28,6 +28,8 @@ async function run() {
     const userCollection = client.db("gymDB").collection("users");
     const trainerInfoCollection = client.db("gymDB").collection("trainerInfo");
     const paymentInfoCollection = client.db("gymDB").collection("paymentInfo");
+    const forumPostCollection = client.db("gymDB").collection("forumPost");
+    const allClassCollection = client.db("gymDB").collection("allClass");
 
     // subscriber api
     app.post("/subscriber", async (req, res) => {
@@ -74,14 +76,34 @@ async function run() {
     app.post("/paymentInfo", async (req, res) => {
       const paymentInfo = req.body;
       const query = { userEmail: paymentInfo.userEmail };
-      const existPaymentInfo = await paymentInfoCollection.findOne(query);
-      if (existPaymentInfo) {
+      // const existPaymentInfo = await paymentInfoCollection.findOne(query);
+      const existPaymentInfo = await paymentInfoCollection
+        .find(query)
+        .toArray();
+      const existingPackage = existPaymentInfo.find(
+        (info) => info.packageName === paymentInfo.packageName
+      );
+      // Check if the user already has the package
+      if (existingPackage && existPaymentInfo.length >= 3) {
         return res.send({
           message: "You already payment successfully",
           insertedId: null,
         });
       }
       const result = await paymentInfoCollection.insertOne(paymentInfo);
+      res.send(result);
+    });
+
+    // forum post api
+    app.post("/forumPost", async (req, res) => {
+      const forumPost = req.body;
+      const result = await forumPostCollection.insertOne(forumPost);
+      res.send(result);
+    });
+    // Class api
+    app.post("/allClass", async (req, res) => {
+      const classInfo = req.body;
+      const result = await allClassCollection.insertOne(classInfo);
       res.send(result);
     });
 
@@ -115,6 +137,101 @@ async function run() {
     app.get("/allUsers", async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
+    });
+
+    //all forum post api
+    app.get("/allForumPost", async (req, res) => {
+      const result = await forumPostCollection.find().toArray();
+      res.send(result);
+    });
+
+    // Update Trainer to member
+    app.patch("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          role: "member",
+        },
+      };
+      const result = await userCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+    // update profile info
+    app.patch("/user/:email", async (req, res) => {
+      const userInfo = req.body;
+      const email = req.params.email;
+      const userInfoFilter = { email: email };
+      console.log(userInfo);
+      // console.log(userInfoFilter);
+
+      const updateDoc = {
+        $set: {
+          name: userInfo.name,
+          photoURL: userInfo.photoURL,
+          lastLogin: userInfo.lastLogin,
+        },
+      };
+
+      const result = await userCollection.updateOne(userInfoFilter, updateDoc);
+      res.send(result);
+    });
+
+    //update the trainerInfo collection status and role of the users collection's user.
+
+    app.patch("/trainerInfoByEmail/:email", async (req, res) => {
+      const email = req.params.email;
+
+      const trainerInfoFilter = { email: email };
+      const updatedUserInfo = {
+        $set: {
+          status: "accepted",
+        },
+      };
+      const userInfoFilter = { email: email };
+      const updatedTrainerInfo = {
+        $set: {
+          role: "trainer",
+        },
+      };
+
+      const session = client.startSession();
+
+      try {
+        session.startTransaction();
+
+        const trainerInfoUpdateResult = await trainerInfoCollection.updateOne(
+          trainerInfoFilter,
+          updatedUserInfo,
+          { session }
+        );
+        const userUpdateResult = await userCollection.updateOne(
+          userInfoFilter,
+          updatedTrainerInfo,
+          { session }
+        );
+
+        if (trainerInfoUpdateResult.matchedCount === 0) {
+          throw new Error("Trainer info not found");
+        }
+
+        if (userUpdateResult.matchedCount === 0) {
+          throw new Error("User not found");
+        }
+
+        await session.commitTransaction();
+        session.endSession();
+
+        res.send({
+          userUpdate: userUpdateResult,
+          trainerInfoUpdate: trainerInfoUpdateResult,
+        });
+      } catch (error) {
+        console.error("Error during transaction:", error); // Log the error
+        await session.abortTransaction();
+        session.endSession();
+        res.status(500).send({ message: error.message });
+      }
     });
 
     // Send a ping to confirm a successful connection
