@@ -30,6 +30,7 @@ async function run() {
     const paymentInfoCollection = client.db("gymDB").collection("paymentInfo");
     const forumPostCollection = client.db("gymDB").collection("forumPost");
     const allClassCollection = client.db("gymDB").collection("allClass");
+    const reviewCollection = client.db("gymDB").collection("review");
 
     // subscriber api
     app.post("/subscriber", async (req, res) => {
@@ -107,6 +108,13 @@ async function run() {
       res.send(result);
     });
 
+    // review api
+    app.post("/review", async (req, res) => {
+      const reviewPost = req.body;
+      const result = await reviewCollection.insertOne(reviewPost);
+      res.send(result);
+    });
+
     // get all subscriber api
     app.get("/subscriber", async (req, res) => {
       const result = await subscriberCollection.find().toArray();
@@ -142,6 +150,15 @@ async function run() {
     //all forum post api
     app.get("/allForumPost", async (req, res) => {
       const result = await forumPostCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/allClasses", async (req, res) => {
+      const result = await allClassCollection.find().toArray();
+      res.send(result);
+    });
+    app.get("/allReview", async (req, res) => {
+      const result = await reviewCollection.find().toArray();
       res.send(result);
     });
 
@@ -291,6 +308,14 @@ async function run() {
         session.endSession();
         res.status(500).send({ message: error.message });
       }
+    });
+
+    // delete slot api
+    app.delete("/paymentInfo/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await paymentInfoCollection.deleteOne(query);
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
