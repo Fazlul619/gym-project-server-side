@@ -234,6 +234,65 @@ async function run() {
       }
     });
 
+    // update the trainerInfo collection if status will rejected
+    app.patch("/trainerInfoByEmailWithRejected/:email", async (req, res) => {
+      const email = req.params.email;
+
+      const trainerInfoFilter = { email: email };
+      const updatedUserInfo = {
+        $set: {
+          status: "rejected",
+        },
+      };
+      const userInfoFilter = { email: email };
+      const messageInfo = req.body;
+      const updatedTrainerInfo = {
+        $set: {
+          message: messageInfo.rejectionMessage,
+        },
+      };
+
+      const session = client.startSession();
+
+      try {
+        session.startTransaction();
+
+        const trainerInfoUpdateResult = await trainerInfoCollection.updateOne(
+          trainerInfoFilter,
+          updatedUserInfo,
+
+          { session }
+        );
+        const userUpdateResult = await userCollection.updateOne(
+          userInfoFilter,
+          updatedTrainerInfo,
+
+          { session }
+        );
+
+        if (trainerInfoUpdateResult.matchedCount === 0) {
+          throw new Error("Trainer info not found");
+        }
+
+        if (userUpdateResult.matchedCount === 0) {
+          throw new Error("User not found");
+        }
+
+        await session.commitTransaction();
+        session.endSession();
+
+        res.send({
+          userUpdate: userUpdateResult,
+          trainerInfoUpdate: trainerInfoUpdateResult,
+        });
+      } catch (error) {
+        console.error("Error during transaction:", error); // Log the error
+        await session.abortTransaction();
+        session.endSession();
+        res.status(500).send({ message: error.message });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
