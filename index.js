@@ -152,6 +152,12 @@ async function run() {
       const result = await forumPostCollection.find().toArray();
       res.send(result);
     });
+    app.get("/allForumPost/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await forumPostCollection.findOne(query);
+      res.send(result);
+    });
 
     app.get("/allClasses", async (req, res) => {
       const result = await allClassCollection.find().toArray();
