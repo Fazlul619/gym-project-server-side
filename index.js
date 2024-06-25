@@ -6,7 +6,15 @@ const cors = require("cors");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 // middleware
-// app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://luminous-puppy-243516.netlify.app",
+      "https://assignment-12-8831a.web.app",
+    ],
+  })
+);
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.crkhnnq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -23,7 +31,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     const subscriberCollection = client.db("gymDB").collection("subscriber");
     const userCollection = client.db("gymDB").collection("users");
     const trainerInfoCollection = client.db("gymDB").collection("trainerInfo");
